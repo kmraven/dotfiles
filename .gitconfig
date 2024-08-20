@@ -1,0 +1,16 @@
+[user]
+	name = Ryota Kimura
+	email = rkimura@fun.bio.keio.ac.jp
+[color]
+	ui = true
+[http]
+	sslverify = false
+[push]
+	default = simple
+[core]
+	excludesfile = /Users/rkimura/.gitignore
+[alias]
+	lgb = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n' --abbrev-commit --date=relative --branches
+	ch = checkout
+	st = status
+	com = commit -am
