@@ -6,6 +6,7 @@ cd "$BASEDIR"
 
 for f in .??*; do
     [ "$f" = ".git" ] && continue
+    [ "$f" = ".DS_Store" ] && continue
 
     if [ -d "$f" ]; then
         for sub_file in "$f"/*; do
