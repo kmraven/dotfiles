@@ -5,9 +5,12 @@ alias la='ls -a'
 alias g='git'
 alias vzsh='vim ~/.zshrc'
 alias szsh='source ~/.zshrc'
-alias dc='docker-compose'
+alias dc='docker compose'
 alias dps='docker ps -a'
 alias gpp='g++ -std=c++17 -g -Wall'
+alias svenv='source ~/venvs/util310/bin/activate'
+
+hash -d qnap="/Users/rkimura/Google Drive/Shared drives/QNAP"
 
 [ -n "`alias run-help`" ] && unalias run-help
 autoload run-help
@@ -18,6 +21,8 @@ chpwd() {
 
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk8-zulu/Contents/Home
 export EDITOR='vim'
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
 
 # 長めのコマンドをエディタで編集する機能
 autoload -Uz edit-command-line
