@@ -9,6 +9,16 @@ alias dc='docker compose'
 alias dps='docker ps -a'
 alias gpp='g++ -std=c++17 -g -Wall'
 alias svenv='source ~/venvs/util310/bin/activate'
+alias conda='micromamba'
+
+# remote desktopのために設定
+export DISPLAY=:0
+export SAVEHIST=100000
+export EDITOR='vim'
+
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk8-zulu/Contents/Home
+export GOPATH=$HOME/go
+export PATH=$PATH:$GOPATH/bin
 
 hash -d qnap="/Users/rkimura/Google Drive/Shared drives/QNAP"
 
@@ -18,11 +28,6 @@ autoload run-help
 chpwd() {
 	ls;
 }
-
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/openjdk8-zulu/Contents/Home
-export EDITOR='vim'
-export GOPATH=$HOME/go
-export PATH=$PATH:$GOPATH/bin
 
 # 長めのコマンドをエディタで編集する機能
 autoload -Uz edit-command-line
@@ -47,15 +52,24 @@ setopt HIST_IGNORE_DUPS
 setopt HIST_NO_STORE
 unsetopt EXTENDED_GLOB
 
-export SAVEHIST=100000
 autoload history-search-end
 zle -N history-beginning-search-backward-end history-search-end
 zle -N history-beginning-search-forward-end history-search-end
 bindkey "^P" history-beginning-search-backward-end
 bindkey "^N" history-beginning-search-forward-end
 
-# remote desktopのために設定
-export DISPLAY=:0
+# >>> mamba initialize >>>
+# !! Contents within this block are managed by 'micromamba shell init' !!
+export MAMBA_EXE='/opt/local/bin/micromamba';
+export MAMBA_ROOT_PREFIX='/Users/rkimura/micromamba';
+__mamba_setup="$("$MAMBA_EXE" shell hook --shell zsh --root-prefix "$MAMBA_ROOT_PREFIX" 2> /dev/null)"
+if [ $? -eq 0 ]; then
+    eval "$__mamba_setup"
+else
+    alias micromamba="$MAMBA_EXE"  # Fallback on help from micromamba activate
+fi
+unset __mamba_setup
+# <<< mamba initialize <<<
 
 eval "$(starship init zsh)"
 starship preset nerd-font-symbols -o ~/.config/starship.toml
