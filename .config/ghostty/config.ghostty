@@ -1,0 +1,8 @@
+font-family = Nerd Font
+font-size = 18
+background-opacity = 0.8
+background-blur-radius = 15
+macos-titlebar-style = transparent
+macos-window-shadow = true
+mouse-hide-while-typing = true
+theme = GitHub Dark High Contrast
