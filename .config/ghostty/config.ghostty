@@ -7,3 +7,4 @@ macos-window-shadow = true
 mouse-hide-while-typing = true
 theme = GitHub Dark High Contrast
 shell-integration-features = ssh-terminfo,ssh-env
+mouse-scroll-multiplier = 2.5
