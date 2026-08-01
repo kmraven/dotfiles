@@ -10,6 +10,7 @@ alias dps='docker ps -a'
 alias gpp='g++ -std=c++17 -g -Wall'
 alias svenv='source ~/venvs/util310/bin/activate'
 alias conda='micromamba'
+alias pwgen='pwgen -c -n -y -B -1 12'
 
 # remote desktopのために設定
 export DISPLAY=:0
@@ -73,3 +74,11 @@ unset __mamba_setup
 
 eval "$(starship init zsh)"
 starship preset nerd-font-symbols -o ~/.config/starship.toml
+
+function y() {
+	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
+	command yazi "$@" --cwd-file="$tmp"
+	IFS= read -r -d '' cwd < "$tmp"
+	[ "$cwd" != "$PWD" ] && [ -d "$cwd" ] && builtin cd -- "$cwd"
+	command rm -f -- "$tmp"
+}
