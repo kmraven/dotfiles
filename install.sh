@@ -1,71 +1,164 @@
 #!/usr/bin/env bash
 
-set -eu
+set -u
 
 BASEDIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+MANIFEST="$BASEDIR/manifest.txt"
+BACKUP=0
 had_conflict=0
+backup_used=0
+
+usage() {
+    cat <<'EOF'
+Usage: ./install.sh [--backup]
+
+Link the files in manifest.txt into $HOME.
+
+  --backup  Move conflicting files to ~/.dotfiles-backup/<timestamp>/ first.
+  -h, --help
+            Show this help.
+
+Without --backup, conflicting files and symlinks are left untouched.
+EOF
+}
+
+while [ "$#" -gt 0 ]; do
+    case "$1" in
+        --backup)
+            BACKUP=1
+            ;;
+        -h|--help)
+            usage
+            exit 0
+            ;;
+        *)
+            printf 'unknown option: %s\n' "$1" >&2
+            usage >&2
+            exit 2
+            ;;
+    esac
+    shift
+done
+
+case ${HOME:-} in
+    /*) ;;
+    *)
+        printf 'HOME must be set to an absolute path.\n' >&2
+        exit 2
+        ;;
+esac
+
+if [ "$HOME" = / ]; then
+    printf 'Refusing to install with HOME=/.\n' >&2
+    exit 2
+fi
+
+if [ ! -r "$MANIFEST" ]; then
+    printf 'manifest not found: %s\n' "$MANIFEST" >&2
+    exit 2
+fi
+
+BACKUP_ROOT=${DOTFILES_BACKUP_DIR:-"$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"}
+
+backup_item() {
+    local target_file=$1
+    local relative_path=${target_file#"$HOME"/}
+    local backup_file="$BACKUP_ROOT/$relative_path"
+
+    if [ -e "$backup_file" ] || [ -L "$backup_file" ]; then
+        printf 'skip (backup destination exists): %s\n' "$backup_file" >&2
+        return 1
+    fi
+
+    mkdir -p "$(dirname -- "$backup_file")" || return 1
+    mv -- "$target_file" "$backup_file" || return 1
+    printf 'backed up: %s -> %s\n' "$target_file" "$backup_file"
+    backup_used=1
+}
 
 link_file() {
     local source_file=$1
     local target_file=$2
+    local target_parent
+
+    target_parent=$(dirname -- "$target_file")
+    if ! mkdir -p "$target_parent"; then
+        printf 'skip (cannot create parent directory): %s\n' "$target_parent" >&2
+        had_conflict=1
+        return
+    fi
+
+    # Older versions linked some whole directories. In that case the target is
+    # already the source file through a parent symlink and must not be removed.
+    if [ -e "$target_file" ] && [ "$source_file" -ef "$target_file" ]; then
+        printf 'already linked: %s\n' "$target_file"
+        return
+    fi
 
     if [ -L "$target_file" ]; then
-        ln -snfv "$source_file" "$target_file"
+        if [ "$(readlink "$target_file")" = "$source_file" ]; then
+            printf 'already linked: %s\n' "$target_file"
+            return
+        fi
+
+        if [ "$BACKUP" -eq 1 ] && backup_item "$target_file"; then
+            :
+        else
+            printf 'skip (different symlink exists): %s\n' "$target_file" >&2
+            had_conflict=1
+            return
+        fi
     elif [ -e "$target_file" ]; then
-        if cmp -s "$source_file" "$target_file"; then
-            ln -snfv "$source_file" "$target_file"
+        if [ -f "$target_file" ] && cmp -s "$source_file" "$target_file"; then
+            if ! rm -- "$target_file"; then
+                printf 'skip (cannot replace identical file): %s\n' "$target_file" >&2
+                had_conflict=1
+                return
+            fi
+        elif [ "$BACKUP" -eq 1 ] && backup_item "$target_file"; then
+            :
         else
             printf 'skip (different file exists): %s\n' "$target_file" >&2
             had_conflict=1
+            return
         fi
-    else
-        ln -snv "$source_file" "$target_file"
+    fi
+
+    if ! ln -snv "$source_file" "$target_file"; then
+        printf 'failed to link: %s\n' "$target_file" >&2
+        had_conflict=1
     fi
 }
 
-link_tree() {
-    local source_path=$1
-    local target_path=$2
-    local child
-
-    if [ -d "$source_path" ] && [ ! -L "$source_path" ]; then
-        if [ -L "$target_path" ]; then
-            if [ "$(readlink "$target_path")" = "$source_path" ]; then
-                printf 'already linked: %s\n' "$target_path"
-            else
-                printf 'skip (directory symlink exists): %s\n' "$target_path" >&2
-                had_conflict=1
-            fi
-            return
-        fi
-
-        if [ -e "$target_path" ] && [ ! -d "$target_path" ]; then
-            printf 'skip (non-directory exists): %s\n' "$target_path" >&2
+while IFS= read -r relative_path || [ -n "$relative_path" ]; do
+    case "$relative_path" in
+        ''|'#'*)
+            continue
+            ;;
+        /*|../*|*/../*|*/..|.|./*|*/./*)
+            printf 'invalid manifest entry: %s\n' "$relative_path" >&2
             had_conflict=1
-            return
-        fi
+            continue
+            ;;
+    esac
 
-        mkdir -p "$target_path"
+    source_file="$BASEDIR/$relative_path"
+    target_file="$HOME/$relative_path"
 
-        # Include both normal and hidden entries. Non-matching globs are skipped.
-        for child in "$source_path"/* "$source_path"/.[!.]* "$source_path"/..?*; do
-            [ -e "$child" ] || [ -L "$child" ] || continue
-            link_tree "$child" "$target_path/${child##*/}"
-        done
-    else
-        link_file "$source_path" "$target_path"
+    if [ ! -f "$source_file" ] && [ ! -L "$source_file" ]; then
+        printf 'missing source listed in manifest: %s\n' "$source_file" >&2
+        had_conflict=1
+        continue
     fi
-}
 
-for source_path in "$BASEDIR"/.??*; do
-    name=${source_path##*/}
-    [ "$name" = ".git" ] && continue
-    [ "$name" = ".DS_Store" ] && continue
+    link_file "$source_file" "$target_file"
+done < "$MANIFEST"
 
-    link_tree "$source_path" "$HOME/$name"
-done
+if [ "$backup_used" -eq 1 ]; then
+    printf 'Backup directory: %s\n' "$BACKUP_ROOT"
+fi
 
 if [ "$had_conflict" -ne 0 ]; then
-    printf 'Some files were not linked because different files already exist.\n' >&2
+    printf 'Some files were not linked. Re-run with --backup to preserve and replace conflicts.\n' >&2
     exit 1
 fi

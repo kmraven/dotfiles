@@ -1,0 +1,12 @@
+# Files linked into $HOME by install.sh.
+.config/ghostty/config.ghostty
+.config/starship.toml
+.config/yazi/init.lua
+.config/yazi/keymap.toml
+.config/yazi/package.toml
+.gitconfig
+.gitignore
+.latexmkrc
+.vimrc
+.zshenv
+.zshrc

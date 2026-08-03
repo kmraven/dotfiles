@@ -3,12 +3,10 @@
 	email = 128337097+kmraven@users.noreply.github.com
 [color]
 	ui = true
-[http]
-	sslverify = false
 [push]
 	default = simple
 [core]
-	excludesfile = {$HOME}/.gitignore
+	excludesfile = ~/.gitignore
 [alias]
 	lgb = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset%n' --abbrev-commit --date=relative --branches
 	ch = checkout
