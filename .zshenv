@@ -22,3 +22,16 @@ if [[ "$OSTYPE" == darwin* ]]; then
 fi
 
 export PATH
+
+# Use one stable path for per-session forwarded SSH agents. Reconnecting with
+# `ssh -A` refreshes the symlink, so long-lived tmux shells keep working.
+_ssh_agent_link="$HOME/.ssh-agent.sock"
+if [[ -n "${SSH_AUTH_SOCK:-}" && -S "$SSH_AUTH_SOCK" && "$SSH_AUTH_SOCK" != "$_ssh_agent_link" ]]; then
+    if [[ ! -e "$_ssh_agent_link" || -L "$_ssh_agent_link" ]]; then
+        command ln -sfn "$SSH_AUTH_SOCK" "$_ssh_agent_link" 2>/dev/null
+    fi
+fi
+if [[ -S "$_ssh_agent_link" ]]; then
+    export SSH_AUTH_SOCK="$_ssh_agent_link"
+fi
+unset _ssh_agent_link

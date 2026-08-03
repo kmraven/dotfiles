@@ -117,18 +117,18 @@ function y() {
     fi
 
     local tmp_dir=${TMPDIR:-/tmp}
-    local tmp cwd status
+    local tmp cwd yazi_status
     tmp=$(mktemp "${tmp_dir%/}/yazi-cwd.XXXXXX") || return 1
 
     command yazi "$@" --cwd-file="$tmp"
-    status=$?
+    yazi_status=$?
     IFS= read -r -d '' cwd < "$tmp"
     command rm -f -- "$tmp"
 
     if [[ -n "$cwd" && "$cwd" != "$PWD" && -d "$cwd" ]]; then
         builtin cd -- "$cwd"
     fi
-    return $status
+    return $yazi_status
 }
 
 # Per-machine secrets and overrides belong here, outside this repository.
