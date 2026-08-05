@@ -1,4 +1,5 @@
 font-size = 18
+font-family = "MesloLGS Nerd Font Mono"
 background-opacity = 0.8
 background-blur-radius = 15
 macos-titlebar-style = transparent
