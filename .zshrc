@@ -14,7 +14,7 @@ alias szsh='source ~/.zshrc'
 alias dc='docker compose'
 alias dps='docker ps -a'
 alias gpp='g++ -std=c++17 -g -Wall'
-export LS_COLORS="$LS_COLORS:ow=01;34:tw=01;34:st=01;34"
+export LS_COLORS="${LS_COLORS}:ow=01;34:tw=01;34:st=01;34"
 
 if (( $+commands[pwgen] )); then
     alias pwgen='pwgen -c -n -y -B -1 12'
